@@ -533,7 +533,6 @@ const paymentWebhook = async function (dataWebhook) {
           [Op.gte]: new Date(),
         },
       },
-      lock: transaction.LOCK.UPDATE,
       transaction: transaction,
     });
 
@@ -554,7 +553,6 @@ const paymentWebhook = async function (dataWebhook) {
           [Op.eq]: false,
         },
       },
-      lock: transaction.LOCK.UPDATE,
       transaction: transaction,
     });
 
@@ -577,15 +575,17 @@ const paymentWebhook = async function (dataWebhook) {
             id: dataWebhook.order_id,
           },
         },
+        { lock: transaction.LOCK.UPDATE },
         { transaction: transaction },
       );
       await Payment.update(
-        { status: "confirmed" },
+        { status: "confirmed", payment_date_time: dataWebhook.settlement_time },
         {
           where: {
             payment_code: existingBooking.payment_code,
           },
         },
+        { lock: transaction.LOCK.UPDATE },
         { transaction: transaction },
       );
       await transaction.commit();
@@ -606,15 +606,21 @@ const paymentWebhook = async function (dataWebhook) {
             id: dataWebhook.order_id,
           },
         },
+        { lock: transaction.LOCK.UPDATE },
         { transaction: transaction },
       );
       await Payment.update(
-        { status: "failure", status_remark: dataWebhook.transaction_status },
+        {
+          status: "failure",
+          status_remark: dataWebhook.transaction_status,
+          payment_date_time: dataWebhook.settlement_time,
+        },
         {
           where: {
             payment_code: existingBooking.payment_code,
           },
         },
+        { lock: transaction.LOCK.UPDATE },
         { transaction: transaction },
       );
       await transaction.commit();
