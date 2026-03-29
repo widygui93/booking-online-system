@@ -36,7 +36,9 @@
   - need to verify if it is already success for verify otp so the payment can not be bypass(done)
   - need to check is the payment already expired(done)
   - need to check is the resources (timeslot and room ) or (timeslot and therapist) already status confirmed booking before do payment,so each customers will not fight over same resources, example select customer_code , room_id, therapist_id, timeslot_code from bookings where customer_code = 'a' for update; if (customer's timeslot_code and customer's threparist_id) or (customer's timeslot_code and customer's room_id) get status confirmed, it means there is customer already confirmed the booking resouces, so must return failed, message: already confirmed booking
-  - when do payments need to lock and transactional also and try to implement idempotency keys which to recognize and safely retry requests without causing duplicate actions, so after payment finish successfully the locking will be released and the other request of payment will be failed to avoid duplicate booking
+  - when do payments need to lock and transactional (done)
+  - check status transaction before payment(done)
+  - also and try to implement idempotency keys which to recognize and safely retry requests without causing duplicate actions, so after payment finish successfully the locking will be released and the other request of payment will be failed to avoid duplicate booking
 
 ## KNOWN ERROR
 
