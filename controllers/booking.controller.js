@@ -79,6 +79,31 @@ exports.resendOTP = async (req, res) => {
 
 exports.payment = async (req, res) => {
   try {
+    const SERVER_KEYbase64Encoded = Buffer.from(
+      `${process.env.MIDTRANS_SERVER_KEY}:`,
+    ).toString("base64");
+
+    const url = `https://api.sandbox.midtrans.com/v2/${req.body.booking_id}/status`;
+    const options = {
+      method: "GET",
+      headers: {
+        accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Basic ${SERVER_KEYbase64Encoded}`,
+      },
+    };
+
+    const status = await (await fetch(url, options)).json();
+
+    if (
+      status.transaction_status === "settlement" ||
+      status.transaction_status === "capture"
+    ) {
+      return res
+        .status(200)
+        .json({ status: "success", message: "Payment already settled" });
+    }
+
     const midtransClient = require("midtrans-client");
     let snap = new midtransClient.Snap({
       isProduction: false,
@@ -99,16 +124,8 @@ exports.payment = async (req, res) => {
       },
     };
 
-    snap
-      .createTransaction(parameter)
-      .then((transaction) => {
-        console.log(transaction);
-        res.status(200).json({ status: "success", result: transaction });
-      })
-      .catch((error) => {
-        console.log(error);
-        res.status(500).json({ status: "failed", message: error });
-      });
+    const transaction = await snap.createTransaction(parameter);
+    return res.status(200).json({ status: "success", result: transaction });
   } catch (error) {
     console.log(error);
     res.status(500).json({ status: "failed", message: "failed payment" });
@@ -151,12 +168,10 @@ exports.paymentNotification = async (req, res) => {
       console.log(
         `status: ${result.status} , message: waiting for settlement complete`,
       );
-      res
-        .status(200)
-        .json({
-          status: "pending",
-          message: "waiting for settlement complete",
-        });
+      res.status(200).json({
+        status: "pending",
+        message: "waiting for settlement complete",
+      });
     } else {
       console.error(`status: ${result.status} message: ${result.message}`);
       res.status(200).json({ status: result.status, message: result.message });
