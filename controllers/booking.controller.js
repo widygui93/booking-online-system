@@ -148,7 +148,7 @@ exports.paymentNotification = async (req, res) => {
       console.log(result.message);
       res.status(200).json({ status: "failed", message: result.message });
     } else {
-      console.log(result.status, result.message);
+      console.error(`status: ${result.status} message: ${result.message}`);
       res.status(200).json({ status: result.status, message: result.message });
     }
   } catch (error) {
