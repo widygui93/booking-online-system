@@ -147,6 +147,16 @@ exports.paymentNotification = async (req, res) => {
     } else if (result.status == "failure") {
       console.log(result.message);
       res.status(200).json({ status: "failed", message: result.message });
+    } else if (result.status == "pending") {
+      console.log(
+        `status: ${result.status} , message: waiting for settlement complete`,
+      );
+      res
+        .status(200)
+        .json({
+          status: "pending",
+          message: "waiting for settlement complete",
+        });
     } else {
       console.error(`status: ${result.status} message: ${result.message}`);
       res.status(200).json({ status: result.status, message: result.message });
