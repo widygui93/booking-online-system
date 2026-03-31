@@ -83,17 +83,47 @@ exports.payment = async (req, res) => {
       `${process.env.MIDTRANS_SERVER_KEY}:`,
     ).toString("base64");
 
-    const url = `https://api.sandbox.midtrans.com/v2/${req.body.booking_id}/status`;
+    const endpoints = {
+      checkStatus: `https://api.sandbox.midtrans.com/v2/${req.body.booking_id}/status`,
+      transaction: "https://app.sandbox.midtrans.com/snap/v1/transactions",
+    };
+
     const options = {
-      method: "GET",
-      headers: {
-        accept: "application/json",
-        "Content-Type": "application/json",
-        Authorization: `Basic ${SERVER_KEYbase64Encoded}`,
+      checkStatus: {
+        method: "GET",
+        headers: {
+          accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Basic ${SERVER_KEYbase64Encoded}`,
+        },
+      },
+      transaction: {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Basic ${SERVER_KEYbase64Encoded}`,
+          "Idempotency-Key": req.body.booking_id,
+        },
+        body: JSON.stringify({
+          transaction_details: {
+            order_id: req.body.booking_id,
+            gross_amount: req.body.price,
+          },
+          credit_card: {
+            secure: true,
+          },
+          customer_details: {
+            name: req.body.name,
+            phone: req.body.phone_number,
+          },
+        }),
       },
     };
 
-    const status = await (await fetch(url, options)).json();
+    const status = await (
+      await fetch(endpoints.checkStatus, options.checkStatus)
+    ).json();
 
     if (
       status.transaction_status === "settlement" ||
@@ -104,27 +134,10 @@ exports.payment = async (req, res) => {
         .json({ status: "success", message: "Payment already settled" });
     }
 
-    const midtransClient = require("midtrans-client");
-    let snap = new midtransClient.Snap({
-      isProduction: false,
-      serverKey: process.env.MIDTRANS_SERVER_KEY,
-    });
+    const transaction = await (
+      await fetch(endpoints.transaction, options.transaction)
+    ).json();
 
-    let parameter = {
-      transaction_details: {
-        order_id: req.body.booking_id,
-        gross_amount: req.body.price,
-      },
-      credit_card: {
-        secure: true,
-      },
-      customer_details: {
-        name: req.body.name,
-        phone: req.body.phone_number,
-      },
-    };
-
-    const transaction = await snap.createTransaction(parameter);
     return res.status(200).json({ status: "success", result: transaction });
   } catch (error) {
     console.log(error);
