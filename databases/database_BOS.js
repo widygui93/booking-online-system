@@ -514,20 +514,16 @@ const otpResend = async function (dataRequest) {
   }
 };
 
-const paymentWebhook = async function (dataWebhook) {
+const checkDataPayment = async function (dataPaymentRequest) {
   const transaction = await database_BOS.transaction({
     isolationLevel: Transaction.ISOLATION_LEVELS.REPEATABLE_READ,
   });
-
   try {
     const existingBooking = await Booking.findOne({
       attributes: ["id", "payment_code"],
       where: {
         id: {
-          [Op.eq]: dataWebhook.order_id,
-        },
-        status: {
-          [Op.eq]: "pending_payment",
+          [Op.eq]: dataPaymentRequest.booking_id,
         },
         expires_at: {
           [Op.gte]: new Date(),
@@ -537,8 +533,9 @@ const paymentWebhook = async function (dataWebhook) {
     });
 
     if (!existingBooking) {
+      await transaction.commit();
       return {
-        status: "failed-booking-not-found",
+        status: "failed",
         message: "Exisiting Booking Not Found",
       };
     }
@@ -557,12 +554,73 @@ const paymentWebhook = async function (dataWebhook) {
     });
 
     if (notVerifiedBooking) {
+      await transaction.commit();
       return {
-        status: "failed-booking-not-verified",
+        status: "failed",
         message: "Booking is not verified yet",
       };
     }
 
+    const dataPaymentResult = await Booking.findOne({
+      attributes: ["id"],
+      where: {
+        id: dataPaymentRequest.booking_id,
+      },
+      include: [
+        {
+          model: Payment,
+          required: true,
+          attributes: ["amounts"],
+        },
+        {
+          model: Customer,
+          required: true,
+          attributes: ["phone_number", "name"],
+        },
+      ],
+      transaction: transaction,
+    });
+
+    let invalidDataPayment = {};
+    if (
+      dataPaymentResult.Customer.dataValues.name !== dataPaymentRequest.name
+    ) {
+      invalidDataPayment.name = dataPaymentRequest.name;
+    }
+    if (
+      dataPaymentResult.Customer.dataValues.phone_number !=
+      dataPaymentRequest.phone_number
+    ) {
+      invalidDataPayment.phone_number = dataPaymentRequest.phone_number;
+    }
+    if (
+      dataPaymentResult.Payment.dataValues.amounts !== dataPaymentRequest.price
+    ) {
+      invalidDataPayment.amounts = dataPaymentRequest.price;
+    }
+    if (Object.keys(invalidDataPayment).length != 0) {
+      await transaction.commit();
+      return {
+        status: "failed",
+        message: { text: "Payment data is invalid", data: invalidDataPayment },
+      };
+    } else {
+      await transaction.commit();
+      return { status: "success", message: "Payment data is valid" };
+    }
+  } catch (error) {
+    console.error(error);
+    await transaction.rollback();
+    return { status: "failed", message: "Payment data is invalid" };
+  }
+};
+
+const paymentWebhook = async function (dataWebhook) {
+  const transaction = await database_BOS.transaction({
+    isolationLevel: Transaction.ISOLATION_LEVELS.REPEATABLE_READ,
+  });
+
+  try {
     if (
       dataWebhook.transaction_status === "capture" ||
       dataWebhook.transaction_status === "settlement"
@@ -650,4 +708,5 @@ module.exports = {
   setExpiredVerification,
   otpResend,
   paymentWebhook,
+  checkDataPayment,
 };
