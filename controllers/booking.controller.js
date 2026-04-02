@@ -6,6 +6,7 @@ const {
   otpVerification,
   otpResend,
   paymentWebhook,
+  checkDataPayment,
 } = require("../databases/database_BOS");
 const { generateOTP, hashingOTP, sendOTP } = require("../utils/otp");
 require("dotenv").config();
@@ -79,6 +80,12 @@ exports.resendOTP = async (req, res) => {
 
 exports.payment = async (req, res) => {
   try {
+    const result = await checkDataPayment(req.body);
+
+    if (result.status === "failed") {
+      return res.status(500).json({ message: result });
+    }
+
     const SERVER_KEYbase64Encoded = Buffer.from(
       `${process.env.MIDTRANS_SERVER_KEY}:`,
     ).toString("base64");
@@ -141,7 +148,9 @@ exports.payment = async (req, res) => {
     return res.status(200).json({ status: "success", result: transaction });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ status: "failed", message: "failed payment" });
+    return res
+      .status(500)
+      .json({ status: "failed", message: "failed payment" });
   }
 };
 
@@ -165,11 +174,7 @@ exports.paymentNotification = async (req, res) => {
 
     const result = await paymentWebhook(req.body);
 
-    if (result.status == "failed-booking-not-found") {
-      res.status(404).json({ status: "failed", message: result.message });
-    } else if (result.status == "failed-booking-not-verified") {
-      res.status(200).json({ status: "failed", message: result.message });
-    } else if (result.status == "success") {
+    if (result.status == "success") {
       console.log(result.message);
       res
         .status(200)
