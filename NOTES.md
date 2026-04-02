@@ -33,7 +33,7 @@
 - for payment
   - testing positive flow(done)
   - need to test negative flow
-  - need to check the body/payload of endpoint /payment with table booking,payment and customer to make sure the data is correct and not modified
+  - need to check the body/payload of endpoint /payment with table booking,payment and customer to make sure the data is correct and not modified(done)
   - need to verify if it is already success for verify otp so the payment can not be bypass(done)
   - need to check is the payment already expired(done)
   - need to check is the resources (timeslot and room ) or (timeslot and therapist) already status confirmed booking before do payment,so each customers will not fight over same resources, example select customer_code , room_id, therapist_id, timeslot_code from bookings where customer_code = 'a' for update; if (customer's timeslot_code and customer's threparist_id) or (customer's timeslot_code and customer's room_id) get status confirmed, it means there is customer already confirmed the booking resouces, so must return failed, message: already confirmed booking
