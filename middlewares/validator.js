@@ -90,6 +90,8 @@ exports.resendOTPValidator = [
 
 exports.paymentValidator = [
   body("booking_id")
+    .exists()
+    .notEmpty()
     .trim()
     .escape()
     .isUUID()
@@ -97,6 +99,8 @@ exports.paymentValidator = [
     .withMessage("Invalid booking ID"),
 
   body("name")
+    .exists()
+    .notEmpty()
     .trim()
     .escape()
     .toLowerCase()
@@ -104,13 +108,19 @@ exports.paymentValidator = [
     .withMessage("Name is invalid"),
 
   body("phone_number")
+    .exists()
+    .notEmpty()
     .trim()
     .escape()
     .isMobilePhone(["id-ID"])
     .matches(/^[0-9]{8,15}$/)
     .withMessage("Invalid phone number"),
 
-  body("price").isInt({ min: 1 }).withMessage("Invalid price"),
+  body("price")
+    .exists()
+    .notEmpty()
+    .isInt({ min: 1 })
+    .withMessage("Invalid price"),
 ];
 
 exports.checkValidation = (req, res, next) => {
