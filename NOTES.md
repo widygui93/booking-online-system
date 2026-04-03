@@ -31,6 +31,7 @@
 - create unit testing for booking concurrency test(done)
 - create unit testing for booking conflict test(done)
 - for payment
+  - add validation such as exists and not empty for payment payload(done)
   - testing positive flow(done)
   - need to test and make sure to cover negative flow
   - need to check the body/payload of endpoint /payment with table booking,payment and customer to make sure the data is correct and not modified(done)
