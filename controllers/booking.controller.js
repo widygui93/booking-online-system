@@ -203,10 +203,8 @@ exports.paymentNotification = async (req, res) => {
 };
 
 exports.redirectFinishPayment = async (req, res) => {
-  // res.json({
-  //   status: "success",
-  //   message: "You finish payment, back to booking application",
-  // });
   res.set("Content-Type", "text/html");
-  res.send("<p>You finish payment, back to booking application</p>");
+  res
+    .status(200)
+    .send("<p>You will get notification for successfull payment</p>");
 };
