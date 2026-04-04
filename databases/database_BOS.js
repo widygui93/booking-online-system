@@ -621,6 +621,24 @@ const paymentWebhook = async function (dataWebhook) {
   });
 
   try {
+    const existingBooking = await Booking.findOne({
+      attributes: ["id", "payment_code"],
+      where: {
+        id: {
+          [Op.eq]: dataWebhook.order_id,
+        },
+      },
+      transaction: transaction,
+    });
+
+    if (!existingBooking) {
+      await transaction.commit();
+      return {
+        status: "failed",
+        message: "Exisiting Booking Not Found",
+      };
+    }
+
     if (
       dataWebhook.transaction_status === "capture" ||
       dataWebhook.transaction_status === "settlement"
