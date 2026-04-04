@@ -31,7 +31,7 @@ module.exports = (app) => {
 
   router.post("/webhook/payment-notification", bookings.paymentNotification);
 
-  router.post("/redirect/finish-payment", bookings.redirectFinishPayment);
+  router.get("/redirect/finish-payment", bookings.redirectFinishPayment);
 
   app.use("/booking", router);
   app.use((req, res) =>
