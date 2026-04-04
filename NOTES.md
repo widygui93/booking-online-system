@@ -41,6 +41,9 @@
   - when do payments need to lock and transactional (done)
   - check status transaction before payment(done)
   - also and try to implement idempotency keys which to recognize and safely retry requests without causing duplicate actions, so after payment finish successfully the locking will be released and the other request of payment will be failed to avoid duplicate booking(done)
+  - complete redirect success payment webhook(done)
+  - need to handle redirect failed payment webhook
+  - need to send WhatsApp success confirmation
 
 ## KNOWN ERROR
 
