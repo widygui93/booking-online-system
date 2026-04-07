@@ -9,6 +9,7 @@ const {
   checkDataPayment,
 } = require("../databases/database_BOS");
 const { generateOTP, hashingOTP, sendOTP } = require("../utils/otp");
+const { sendBookingConfirmation } = require("../utils/bookingConfirmation");
 require("dotenv").config();
 
 exports.welcomeBooking = (req, res) => {
@@ -176,6 +177,7 @@ exports.paymentNotification = async (req, res) => {
 
     if (result.status == "success") {
       console.log(result.message);
+      sendBookingConfirmation(result.data);
       res
         .status(200)
         .json({ status: "success", message: "payment notification received" });
