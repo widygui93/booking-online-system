@@ -43,7 +43,7 @@
   - also and try to implement idempotency keys which to recognize and safely retry requests without causing duplicate actions, so after payment finish successfully the locking will be released and the other request of payment will be failed to avoid duplicate booking(done)
   - complete redirect success payment webhook(done)
   - need to handle redirect failed payment webhook
-  - need to send WhatsApp success confirmation
+  - need to send WhatsApp success confirmation(done)
 
 ## KNOWN ERROR
 
