@@ -622,12 +622,34 @@ const paymentWebhook = async function (dataWebhook) {
 
   try {
     const existingBooking = await Booking.findOne({
-      attributes: ["id", "payment_code"],
+      attributes: ["id", "payment_code", "booking_date"],
       where: {
         id: {
           [Op.eq]: dataWebhook.order_id,
         },
       },
+      include: [
+        {
+          model: Payment,
+          required: true,
+          attributes: ["amounts"],
+        },
+        {
+          model: Customer,
+          required: true,
+          attributes: ["phone_number"],
+        },
+        {
+          model: Timeslot,
+          required: true,
+          attributes: ["start_time"],
+        },
+        {
+          model: Service,
+          required: true,
+          attributes: ["massage_type"],
+        },
+      ],
       transaction: transaction,
     });
 
@@ -665,7 +687,17 @@ const paymentWebhook = async function (dataWebhook) {
         { transaction: transaction },
       );
       await transaction.commit();
-      return { status: "success", message: "Booking completed successfully" };
+      return {
+        status: "success",
+        message: "Booking completed successfully",
+        data: {
+          booking_date: existingBooking.booking_date,
+          start_time: existingBooking.Timeslot.start_time,
+          massage_type: existingBooking.Service.massage_type,
+          phone_number: existingBooking.Customer.phone_number,
+          amounts: existingBooking.Payment.amounts,
+        },
+      };
     } else if (
       dataWebhook.transaction_status === "cancel" ||
       dataWebhook.transaction_status === "deny" ||
